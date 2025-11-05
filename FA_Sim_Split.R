@@ -13,7 +13,6 @@ Ergebnis <- list(
   TLI = NULL,
   SRMR = NULL
 )
-
 #Erstellen einer Liste ("Listenvektor") der Länge n_sim, um später dort die 
 #Ergebnisse der einzelnen Durchläufe zu speichern 
 sim_results <- vector("list", n_sim)
@@ -95,7 +94,9 @@ Faktorenanalyse <- function(n, items, betas, sigma_e, nfactors = NULL) {
 #sigma_e = Standardabweichung des Fehlers 
 #lambas = Faktorladungen 
 #fac = Anzahl der Faktoren
-#
+
+
+#Lambda simulieren
 
 Daten_simulieren <- function(n, items, sigma_e, lambdas, fac) {
   #Argumente Check
@@ -150,12 +151,50 @@ Daten_simulieren <- function(n, items, sigma_e, lambdas, fac) {
 }
 
 
+###Korrelationsmatrix (Faktor x Item)
+#Maximale Anzahl Faktoren = mF
+max_factors <- 10
+#Anzahl der Faktoren ziehen
+n_factors <- sample(1:max_factors, size = 1, replace = TRUE)
+#Maximale Anzahl Items = mI
+max_items <- 10
 
+##Alle Fakotren unterschiedliche Item-Anzahl
+#Anzahl der Items pro Faktor (Anzahl nach Faktor variabel)
+items_per_factor <- sample(1:max_items, size = n_factors, replace = TRUE)
+#Anzahl der Items gesamt = nrow
+n_items <- sum(items_per_factor)
 
+##Alle Faktoren gleich viele Item-Anzahl
+#Anzahl der Items pro Faktor (Alle Faktoren gleich viele Items)
+items_per_factor_con <- sample(1:max_items, size = 1, replace = TRUE )
+#Anzahl der Items gesamt = nrow
+n_items_con <- items_per_factor_con * n_factors
 
+#leere Korrleationsmatrix
+lambda <- matrix(0, nrow = n_items, ncol = n_factors)
 
+#Hauptladungen Wertebereich
+main_loading_range <- c(0.5, 0.9)
+#Nebenladungen Wertebereich
+cross_loading_range <- c(0, 0.3)
 
+start <- 1
+for(f in 1:n_factors){
+  num_items <- items_per_factor[f]
+  if(num_items > 0){
+    high_items <- start:(start + num_items - 1)
+    lambda[high_items, f] <- runif(num_items, min=main_loading_range[1], 
+                                   max=main_loading_range[2])
+    start <- start + num_items
+  }
+}
 
+# Nebenladungen zufällig für alle Items/Faktoren, wo noch 0 ist
+lambda[lambda == 0] <- runif(sum(lambda==0), min=cross_loading_range[1], 
+                             max=cross_loading_range[2])
+
+lambda <- round(lambda, 4)
 
 ##Erklärung Liste
 #Anzahl_Rep => Enthält n, die Anzahl der simulierten Beobachtungen (VPn-Anzahl)
